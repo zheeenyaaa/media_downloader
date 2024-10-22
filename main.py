@@ -6,14 +6,21 @@ import time
 from requests.exceptions import ConnectionError, Timeout
 import logging
 import urllib
+import json
 
 
 # file logs
 logging.basicConfig(filename='bot.log', level=logging.INFO, 
                        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
-
-TOKEN = "1637113563:AAHDkAZ0GTQXlRQAFzsUzkRqmLKx0Y-SWPA"
+TOKEN = ""
+po_token = ""
+user_id = ""
+with open("token.json", "r") as file:
+    data = json.load(file)
+    TOKEN = data["TOKEN"]
+    po_token = data["po_token"]
+    user_id = data["user_id"]
 bot = telebot.TeleBot(TOKEN)
 count = 0
 
@@ -26,14 +33,6 @@ proxy_handler = {}
 if len(proxy_server) != 0:
     proxy_handler["http"] = f"{proxy_server}",
     proxy_handler["https"] = f"{proxy_server}"
-
-
-secret = []
-
-with open("data.txt", "r", encoding="utf-8") as f:
-    for line in f:
-        st = line.strip().replace("\ufeff", "")
-        secret.append(st)
 
 
 @bot.message_handler(commands = ['start'])
@@ -54,10 +53,14 @@ def send_audio(message):
         logging.info(f"Создаем папку {user_id}")
                      
     try:
+        logging.info(f"Запускаем процесс получения видео для пользователя {user_id}")
+
         yt = YouTube(message.text, on_progress_callback=on_progress, proxies=proxy_handler)
         ttl = yt.title
         ys = yt.streams.get_audio_only()
         ys.download(mp3=True, filename=f"{count}", output_path=f"./storage/{user_id}")
+
+        logging.info(f"Завершен процесс получения видео {ttl} для пользователя {user_id}")
     except urllib.error.URLError as e:
         logging.error(f"URLError for user {user_id}: {str(e)}")
         bot.send_message(message.chat.id, "Не удалось подключиться к YouTube. Проверьте ваше интернет-соединение или попробуйте позже.")
@@ -75,7 +78,7 @@ def send_audio(message):
             audio_path = f"./storage/{user_id}/{count}.mp3"
             audio = open(audio_path, "rb")
 
-            logging.info(f"Поптыка отправить пользователю {user_id} видео {ttl}, попытка {attempt}")
+            logging.info(f"Попытка отправить пользователю {user_id} видео {ttl}, попытка {attempt}")
             bot.send_audio(message.chat.id, audio, title = f"{ttl}", timeout=60)
             audio.close()
             break
@@ -88,7 +91,7 @@ def send_audio(message):
                 bot.send_message(message.chat.id, "При отправке аудио возникла ошибка. Попробуйте снова.")
         finally:
             if os.path.exists(audio_path):
-                logging.info(f"Deletinыg file {audio_path} from {user_id}")
+                logging.info(f"Deleting file {audio_path} from {user_id}")
                 os.remove(audio_path)
 
 bot.polling()

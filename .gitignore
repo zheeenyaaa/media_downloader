@@ -24,3 +24,4 @@ logs/*
 
 proxy.txt
 test.py
+token.json
