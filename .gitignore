@@ -1,0 +1,26 @@
+﻿# Ignore specific folders
+node_modules/
+storage/
+build/
+dist/
+.vscode/
+venv/
+
+
+# Ignore all files in a folder but keep the folder itself
+logs/*
+!logs/.gitkeep
+
+# Ignore specific file types
+*.log
+*.tmp
+*.temp
+*.service
+
+# Ignore environment files that may contain sensitive information
+.env
+.env.local
+
+
+proxy.txt
+test.py
